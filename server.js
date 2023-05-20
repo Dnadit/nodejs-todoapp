@@ -6,6 +6,7 @@ const MongoClient = require('mongodb').MongoClient;
 const methodOverride = require('method-override');
 app.use(methodOverride('_method'));
 require('dotenv').config();
+const { ObjectId } = require('mongodb');
 
 app.set('view engine', 'ejs');
 
@@ -212,8 +213,8 @@ app.delete('/delete', (req, res) => {
 
 // app.use -> 전역 미들웨어
 app.use('/shop', require('./routes/shop'));
-
 app.use('/board/sub', require('./routes/board'));
+
 
 let multer = require('multer');
 var storage = multer.diskStorage({
@@ -248,4 +249,61 @@ app.post('/upload', upload.single('profile'), (req, res) => {
 
 app.get('/image/:imageName', (req, res) => {
     res.sendFile( __dirname + '/public/image/' + req.params.imageName );
+});
+
+app.post('/chatroom', isLogined, (req, res)=>{
+    
+    var data = {
+        title : '무슨무슨채팅방',
+        member : [ObjectId(req.body.to), req.user._id],
+        date : new Date()
+    }
+
+    db.collection('chatroom').insertOne(data).then((result)=>{
+        res.send('성공');
+    })
+});
+
+app.get('/chat', isLogined, (req, res)=>{
+    db.collection('chatroom').find({ member : req.user._id }).toArray().then((result)=>{
+        res.render('chat.ejs', { data : result });
+    })
+});
+
+app.post('/message', isLogined, (req, res)=>{
+    var data = {
+        parent : req.body.parent,
+        content : req.body.content,
+        userid : req.user._id,
+        date : new Date(),
+    }
+    
+    db.collection('message').insertOne(data).then((result)=>{        
+        res.send(result);
+    })
+});
+
+app.get('/message/:parentid', isLogined, (req, res)=>{
+    
+    res.writeHead(200, {
+        "Connection": "keep-alive",
+        "Content-Type": "text/event-stream",
+        "Cacche-Control": "no-cache",
+    });
+
+    db.collection('message').find({ parent : req.params.parentid }).toArray()
+    .then((result)=>{
+        res.write('event: test\n');
+        res.write(`data: ${JSON.stringify(result)}\n\n`);        
+    })
+
+    const pipeline = [
+        { $match: { 'fullDocument.parent' : req.params.parentid } }
+    ];
+    const collection = db.collection('message');
+    const changeStream = collection.watch(pipeline);
+    changeStream.on('change', (result)=>{
+        res.write('event: test\n');
+        res.write(`data: ${JSON.stringify([result.fullDocument])}\n\n`);
+    });
 });
