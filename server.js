@@ -1,12 +1,21 @@
 const express = require('express');
 const app = express();
+
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
+
 const MongoClient = require('mongodb').MongoClient;
+
 const methodOverride = require('method-override');
 app.use(methodOverride('_method'));
+
 require('dotenv').config();
+
 const { ObjectId } = require('mongodb');
+// socket.io , app.listen -> http.listen
+const http = require('http').createServer(app);
+const {Server} = require('socket.io');
+const io = new Server(http);
 
 app.set('view engine', 'ejs');
 
@@ -17,7 +26,7 @@ MongoClient.connect(process.env.DB_URL, (err, client) => {
     if (err) return console.log(err);
     db = client.db('todoapp');
 
-    app.listen(process.env.PORT, () => {
+    http.listen(process.env.PORT, () => {
         console.log('listening on ' + process.env.PORT);
     });
 });
@@ -307,3 +316,26 @@ app.get('/message/:parentid', isLogined, (req, res)=>{
         res.write(`data: ${JSON.stringify([result.fullDocument])}\n\n`);
     });
 });
+
+app.get('/socket', (req, res)=>{
+    res.render('socket.ejs')
+});
+
+io.on('connection', function(socket){
+    console.log('유저접속됨');
+    
+    socket.on('room1-send', function(data){
+        io.to('room1').emit('broadcast', data);
+    });    
+
+    socket.on('joinroom', function(data){
+        socket.join('room1');
+    });    
+    
+    socket.on('user-send', function(data){
+        io.emit('broadcast', data);
+    });
+    
+    
+});
+
