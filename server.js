@@ -17,7 +17,7 @@ MongoClient.connect(process.env.DB_URL, (err, client) => {
     db = client.db('todoapp');
 
     app.listen(process.env.PORT, () => {
-        console.log('listening on 8080')
+        console.log('listening on ' + process.env.PORT);
     });
 });
 
@@ -214,3 +214,38 @@ app.delete('/delete', (req, res) => {
 app.use('/shop', require('./routes/shop'));
 
 app.use('/board/sub', require('./routes/board'));
+
+let multer = require('multer');
+var storage = multer.diskStorage({
+    destination : function(req, file, cb){
+        cb(null, './public/image');
+    },
+    filename : function(req, file, cb){
+        cb(null, file.originalname + '날짜' + new Date() );
+    },
+    filefilter : function(req, file, cb){
+        var ext = path.extname(file.originalname);
+        if(ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg') {
+            return callback(new Error('PNG, JPG만 업로드하세요'))
+        }
+        callback(null, true)
+    },
+    limits : {
+        fileSize: 1024 * 1024
+    }
+});
+
+var upload = multer({storage : storage});
+
+app.get('/upload', (req, res) => {
+    res.render('upload.ejs')
+});
+
+// 여러개 upload.array('input name1', 'input name2')
+app.post('/upload', upload.single('profile'), (req, res) => {
+    res.send('업로드완료');
+});
+
+app.get('/image/:imageName', (req, res) => {
+    res.sendFile( __dirname + '/public/image/' + req.params.imageName );
+});
