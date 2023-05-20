@@ -1,7 +1,8 @@
 # Node.js로 todoapp 만들기
-- 코딩애플의 강의를 바탕으로 만든 todoapp 입니다
+- Node.js + express.js + mongoDB + ejs 로 만든 todoApp 입니다
 - [todoapp보기](https://todoapp-387307.du.r.appspot.com/) (Google Cloud를 이용한 서버리스 배포)
 - 위 링크는 서버리스로 배포하여 모든 기능을 작동시켜보진 못합니다.
+- 코딩애플의 강의를 바탕으로 하였습니다.
 
 ## 로컬에서 작동방법
 - Nodejs 설치를 요구합니다.
