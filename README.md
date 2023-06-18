@@ -8,9 +8,7 @@
 - Nodejs 설치를 요구합니다.
 
 ```bash
-$ npm init
 $ npm install
-$ npm update
 $ node server.js
 ```
 - DB는 MongoDB 다운로드 하여 `URL` 연결
